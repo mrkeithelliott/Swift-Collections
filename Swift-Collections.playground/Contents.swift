@@ -304,3 +304,147 @@ for (player, score) in scoresDict{
 scoreslist
 players
 
+
+protocol PersonProtocol : Hashable {
+    var first_name: String {get set}
+    var last_name: String {get set}
+    var email: String {get set}
+}
+
+struct Person: PersonProtocol {
+    var first_name: String
+    var last_name: String
+    var email: String
+    
+    var hashValue: Int {
+        get{
+            return "\(first_name), \(last_name),\(email)".hashValue
+        }
+    }
+}
+
+func ==(lhs:Person, rhs:Person)->Bool{
+    return lhs.hashValue == rhs.hashValue
+}
+
+protocol PeopleProtocol: Hashable{
+    typealias ItemType
+    mutating func add(person: Person)
+    mutating func remove(person: Person)->Person?
+    func retrieveByFirstName(name: String)->[Person]?
+    func retrieveByLastName(name: String)->[Person]?
+    func retrieveSharedContacts(contacts: ItemType)->Set<Person>?
+    var count: Int { get }
+}
+
+struct PeopleCollection: PeopleProtocol{
+    var people:Set<Person> = []
+    
+    mutating func add(person: Person) {
+        if !people.contains(person){
+            people.insert(person)
+        }
+    }
+    
+    mutating func remove(person: Person) -> Person? {
+        let removedPerson = people.remove(person)
+        return removedPerson
+    }
+    
+    func retrieveByFirstName(name: String) -> [Person]? {
+        let foundPeople = people.filter {
+            $0.first_name == name
+        }
+        
+        return foundPeople
+    }
+    
+    func retrieveByLastName(name: String) -> [Person]? {
+        let foundPeople = people.filter {
+            $0.last_name == name
+        }
+        
+        return foundPeople
+    }
+    
+    func retrieveSharedContacts(contacts: PeopleCollection) -> Set<Person>? {
+        let common_contacts = self.people.intersect(contacts.people)
+        return common_contacts
+    }
+    
+    var count: Int {
+        get{
+            return people.count
+        }
+    }
+    
+    var hashValue: Int {
+        get {
+            return people.hashValue
+        }
+    }
+}
+
+func ==(lhs: PeopleCollection, rhs: PeopleCollection)->Bool{
+    return lhs.people == rhs.people
+}
+
+
+extension Person: CustomStringConvertible{
+    var description: String {
+        get{
+            return "name: \(first_name) \(last_name)  email: \(email)"
+        }
+    }
+}
+
+extension PeopleCollection: CustomStringConvertible{
+    var description: String {
+        get{
+            var _description: String = ""
+            for person in self.people{
+                 _description += "person: \(person) "
+            }
+            return _description
+        }
+    }
+}
+
+
+let jack = Person(first_name: "Jack", last_name: "Jones", email: "jack_white@acme.com")
+let lee = Person(first_name: "Lee", last_name: "Black", email: "lb@acme.com")
+let roger = Person(first_name: "Roger", last_name: "Bland", email: "rb@xzy.com")
+let mary = Person(first_name: "Mary", last_name: "Jones", email: "mw@xyz.com")
+
+var peopleList = PeopleCollection()
+peopleList.add(jack)
+peopleList.add(lee)
+peopleList.add(roger)
+peopleList.add(mary)
+peopleList.count
+peopleList
+print(peopleList)
+
+
+let removeJack = peopleList.remove(jack)
+peopleList.add(removeJack!)
+
+let theJones = peopleList.retrieveByLastName("Jones")
+theJones?.count
+
+let jack2 = Person(first_name: "Jack", last_name: "Jones", email: "jack_white@acme.com")
+let lee2 = Person(first_name: "Lee", last_name: "Black", email: "lb@acme.com")
+let robert = Person(first_name: "Robert", last_name: "Bland", email: "rb@xzy.com")
+let mickey = Person(first_name: "Mickey", last_name: "Jones", email: "mw@xyz.com")
+
+var contactList = PeopleCollection()
+contactList.add(jack2)
+contactList.add(lee2)
+contactList.add(robert)
+contactList.add(mickey)
+
+let common_contacts = peopleList.retrieveSharedContacts(contactList)
+common_contacts?.count
+
+
+
